@@ -41,9 +41,10 @@ public class MapGeneration : MonoBehaviour
     public bool autoUpdate;
     [SerializeField]
     private ColorGradient regionColors;
-    [SerializeField]
     private List<BorderInfo> regionBorders;
     public bool bordersChanged;
+    public bool snapBorders;
+    public float snapMinDist = 0.1f;
 
     public void GenerateMap() {
         float[,] noiseMap = NoiseGenerator.GenerateNoise(mapWidth, mapHeight, seed, noiseScale, octaves, persistance, lacunarity, offset);
@@ -69,30 +70,6 @@ public class MapGeneration : MonoBehaviour
                 for (int y = 0; y < _mapHeight; y++)
                 {
                     float currHeight = noiseMap[x,y];
-                    /*if(y-1 >= 0) {//check up
-                        if((currHeight - noiseMap[x, (y-1)]) >= blockageDifference) {
-                            colorMap[y * _mapWidth + x] = Color.black;
-                            continue;
-                        }
-                    }
-                    if(y+1 < noiseMap.GetLength(1)) {//check down
-                        if((currHeight - noiseMap[x, (y+1)]) >= blockageDifference) {
-                            colorMap[y * _mapWidth + x] = Color.black;
-                            continue;
-                        }
-                    }
-                    if(x-1 >= 0) {//check left
-                        if((currHeight - noiseMap[(x-1), y]) >= blockageDifference) {
-                            colorMap[y * _mapWidth + x] = Color.black;
-                            continue;
-                        }
-                    }
-                    if(x+1 < noiseMap.GetLength(0)) {//check right
-                        if((currHeight - noiseMap[(x+1), y]) >= blockageDifference) {
-                            colorMap[y * _mapWidth + x] = Color.black;
-                            continue;
-                        }
-                    }*/
                     if(currHeight <= maxHeight && currHeight >= minHeight) {
                         colorMap[y * _mapWidth + x] = Color.black;
                         continue;
@@ -177,6 +154,18 @@ public class MapGeneration : MonoBehaviour
                 return time;
             }
         }
+    }
+
+    public float[] GetBorderRanges() {//need to get difference between them
+        float[] ranges = new float[regionBorders.Count];
+
+        float lastHeight = 0;
+        for(int i = 0; i < regionBorders.Count; i++) {
+            ranges[i] = regionBorders[i].Time-lastHeight;
+            lastHeight = regionBorders[i].Time;
+        }
+
+        return ranges;
     }
 
     public int NumBorders() {
