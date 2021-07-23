@@ -44,7 +44,6 @@ public class MapGeneration : MonoBehaviour
     private List<BorderInfo> regionBorders;
     public bool bordersChanged;
     public bool snapBorders;
-    public float snapMinDist = 0.1f;
 
     public void GenerateMap() {
         float[,] noiseMap = NoiseGenerator.GenerateNoise(mapWidth, mapHeight, seed, noiseScale, octaves, persistance, lacunarity, offset);
@@ -80,8 +79,24 @@ public class MapGeneration : MonoBehaviour
             return colorMap;
     }
 
-    public float[,] GenerateBlockageMap(float[,] noiseMap) {//blocked = 0, unblocked = 1
+    public float[,] GenerateBlockageMap(float[,] noiseMap) {//blocked = 0, unblocked = 1            //Make the blockage map use the borders
         float[,] blockageMap = new float[noiseMap.GetLength(0), noiseMap.GetLength(1)];
+        BorderInfo leftBorder = regionBorders[0];
+        BorderInfo rightBorder = regionBorders[regionBorders.Count - 1];//go between each set of borders(stating with 0 as a border, not sure about 1) and take the perimiter and set it to blockage
+
+
+        for(int i = 0; i < regionBorders.Count; i++) {
+            if(regionBorders[i].Time <= time) {
+                leftBorder = regionBorders[i];
+            }
+            if(regionBorders[i].Time >= time) {
+                rightBorder = regionBorders[i];
+                break;
+            }
+        }
+
+
+
         //check each side of tile, if it is heigher then a variable height, make it a blocker
         for (int x = 0; x < noiseMap.GetLength(0); x++) {
             for (int y = 0; y < noiseMap.GetLength(1); y++) {
