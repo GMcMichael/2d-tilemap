@@ -50,11 +50,10 @@ public class GradientEditor : EditorWindow
             colorKeyRects[i] = colorKeyRect;
         }
 
-        borderRects = new Rect[(mapGeneration.NumBorders()*2)];
+        borderRects = new Rect[mapGeneration.NumBorders()];
         for(int i = 0; i < borderRects.Length/2; i++) {
             MapGeneration.BorderInfo borderInfo = mapGeneration.GetBorder(i);
-            Rect borderRectMin = new Rect(colorKeyRects[0].xMax + borderSize, gradientPreview.yMax - (gradientPreview.height * borderInfo.min) - keyHeight/2f, keyWidth, keyHeight);
-            Rect borderRectMax = new Rect(colorKeyRects[0].xMax + borderSize, gradientPreview.yMax - (gradientPreview.height * borderInfo.max) - keyHeight/2f, keyWidth, keyHeight);
+            Rect newBorderRect = new Rect(colorKeyRects[0].xMax + borderSize, gradientPreview.yMax - (gradientPreview.height * borderInfo.Time) - keyHeight/2f, keyWidth, keyHeight);
             if(!selectedKey && i == selectedKeyIndex) {
                 EditorGUI.DrawRect(new Rect(borderRectMin.x-2, borderRectMin.y-2, borderRectMin.width+4, borderRectMin.height+4), Color.black);
                 EditorGUI.DrawRect(new Rect(borderRectMax.x-2, borderRectMax.y-2, borderRectMax.width+4, borderRectMax.height+4), Color.black);
