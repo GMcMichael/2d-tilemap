@@ -14,6 +14,8 @@ public class GradientEditor : EditorWindow
     bool verticalOrientation = true;
 
     Rect gradientPreview;
+    Rect borderPreview;
+    Rect borderRange;
     Rect settingsRect;
     Rect[] colorKeyRects;
     Rect[] borderRects;
@@ -55,13 +57,10 @@ public class GradientEditor : EditorWindow
             MapGeneration.BorderInfo borderInfo = mapGeneration.GetBorder(i);
             Rect newBorderRect = new Rect(colorKeyRects[0].xMax + borderSize, gradientPreview.yMax - (gradientPreview.height * borderInfo.Time) - keyHeight/2f, keyWidth, keyHeight);
             if(!selectedKey && i == selectedKeyIndex) {
-                EditorGUI.DrawRect(new Rect(borderRectMin.x-2, borderRectMin.y-2, borderRectMin.width+4, borderRectMin.height+4), Color.black);
-                EditorGUI.DrawRect(new Rect(borderRectMax.x-2, borderRectMax.y-2, borderRectMax.width+4, borderRectMax.height+4), Color.black);
+                EditorGUI.DrawRect(new Rect(newBorderRect.x-2, newBorderRect.y-2, newBorderRect.width+4, newBorderRect.height+4), Color.black);
             }
-            EditorGUI.DrawRect(borderRectMin, Color.grey);
-            EditorGUI.DrawRect(borderRectMax, Color.grey);
-            borderRects[i] = borderRectMin;
-            borderRects[i+1] = borderRectMax;
+            EditorGUI.DrawRect(newBorderRect, gradient.Evaluate(mapGeneration.GetBorder(i).Time));
+            borderRects[i] = newBorderRect;
         }
         
         if(borderRects.Length > 0 )
@@ -78,15 +77,36 @@ public class GradientEditor : EditorWindow
         colorKeyRects = new Rect[gradient.NumKeys()];
         for(int i = 0; i < gradient.NumKeys(); i++) {
             ColorGradient.ColorKey colorKey = gradient.GetKey(i);
-            Rect colorKeyRect = new Rect(gradientPreview.x + (gradientPreview.width * colorKey.Time) + keyHeight/2, gradientPreview.yMax + borderSize, keyHeight, keyWidth);//keyWidth and keyHeight are switched to make key Rects vertical
+            Rect colorKeyRect = new Rect(gradientPreview.x + (gradientPreview.width * colorKey.Time) - keyHeight/2, gradientPreview.yMax + borderSize, keyHeight, keyWidth);//keyWidth and keyHeight are switched to make key Rects vertical
             if(i == selectedKeyIndex) {
                 EditorGUI.DrawRect(new Rect(colorKeyRect.x-2, colorKeyRect.y-2, colorKeyRect.width+4, colorKeyRect.height+4), Color.black);
             }
             EditorGUI.DrawRect(colorKeyRect, colorKey.Color);
             colorKeyRects[i] = colorKeyRect;
         }
+
+        float[] borderRectSettings = {colorKeyRects[0].yMax + borderSize, 5, position.width-borderSize*2};
+        float[] borderPos = mapGeneration.GetBorderRanges();
+        for (int i = 0; i < borderPos.Length; i++)
+        {
+            borderRange = new Rect(gradientPreview.x + (gradientPreview.width * mapGeneration.GetBorder(i).Time), borderRectSettings[0], -(gradientPreview.width * borderPos[i]), borderRectSettings[1]);
+            EditorGUI.DrawRect(borderRange, gradient.Evaluate(mapGeneration.GetBorder(i).Time));
+        }
+        borderRects = new Rect[mapGeneration.NumBorders()];
+        for(int i = 0; i < borderRects.Length; i++) {
+            MapGeneration.BorderInfo borderInfo = mapGeneration.GetBorder(i);
+            Rect newBorderRect = new Rect(gradientPreview.x + (gradientPreview.width * borderInfo.Time) - keyHeight/2f, borderRange.yMax + borderSize, keyHeight, keyWidth);
+            if(!selectedKey && i == selectedKeyIndex) {
+                EditorGUI.DrawRect(new Rect(newBorderRect.x-2, newBorderRect.y-2, newBorderRect.width+4, newBorderRect.height+4), Color.black);
+            }
+            EditorGUI.DrawRect(newBorderRect, gradient.Evaluate(mapGeneration.GetBorder(i).Time));
+            borderRects[i] = newBorderRect;
+        }
         
-        settingsRect = new Rect(borderSize, colorKeyRects[0].yMax + borderSize, position.width-borderSize*2, position.height-colorKeyRects[0].yMax-borderSize*2);
+        if(borderRects.Length > 0 )
+            settingsRect = new Rect(borderSize, borderRects[0].yMax + borderSize, position.width-borderSize*2, position.height-borderRects[0].yMax-borderSize*2);
+        else
+            settingsRect = new Rect(borderSize, colorKeyRects[0].yMax + borderSize, position.width-borderSize*2, position.height-colorKeyRects[0].yMax-borderSize*2);
         DrawSettings();
     }
 
@@ -98,6 +118,7 @@ public class GradientEditor : EditorWindow
                 gradient.UpdateBlendMode(blendMode);
             }
         gradient.randomizeColor = EditorGUILayout.Toggle("Randomize New Color", gradient.randomizeColor);
+        mapGeneration.snapBorders = EditorGUILayout.Toggle("Snap Borders", mapGeneration.snapBorders);
         verticalOrientation = EditorGUILayout.Toggle("Vertical Orientation", verticalOrientation);
         if(selectedKeyIndex >= 0) {
             if(selectedKey) {
@@ -113,7 +134,7 @@ public class GradientEditor : EditorWindow
                 string newBorderName = EditorGUILayout.TextField("Name", mapGeneration.GetBorder(selectedKeyIndex).Name);
                 float newBorderTime = EditorGUILayout.FloatField("Time", mapGeneration.GetBorder(selectedKeyIndex).Time);
                 if(EditorGUI.EndChangeCheck()) {
-                    selectedKeyIndex = mapGeneration.UpdateBorder(selectedKeyIndex, newKeyName, newKeyTime);
+                    selectedKeyIndex = mapGeneration.UpdateBorder(selectedKeyIndex, newBorderName, newBorderTime);
                 }
             }
         }
@@ -147,9 +168,19 @@ public class GradientEditor : EditorWindow
                 if(settingsRect.Contains(guiEvent.mousePosition)) {
                     selectedKeyIndex = -1;
                 } else {
-                    float colorKeyTime = GetTime(guiEvent.mousePosition);
-                    Color keyColor = GetColor(colorKeyTime);
-                    selectedKeyIndex = gradient.AddColorKey(keyColor, colorKeyTime, "");
+                    Rect TimeRect;
+                    if(verticalOrientation) {
+                        TimeRect = new Rect(0, 0, colorKeyRects[0].xMax, position.height);
+                    } else {
+                        TimeRect = new Rect(0, 0, position.width, colorKeyRects[0].yMax);
+                    }
+                    float newTime = GetTime(guiEvent.mousePosition);
+                    if(TimeRect.Contains(guiEvent.mousePosition)) {
+                        Color keyColor = GetColor(newTime);
+                        selectedKeyIndex = gradient.AddColorKey(keyColor, newTime, "");
+                    } else {
+                        selectedKeyIndex = mapGeneration.AddBorder("", newTime);
+                    }
                     mouseIsDownOverKey = true;
                 }
             }
@@ -165,6 +196,16 @@ public class GradientEditor : EditorWindow
             if(selectedKey) {
                 selectedKeyIndex = gradient.UpdateKeyTime(selectedKeyIndex, newTime);
             } else {
+                if(mapGeneration.snapBorders) {
+                    for (int i = 0; i < gradient.NumKeys(); i++)
+                    {
+                        float colorKeyTime = gradient.GetKey(i).Time;
+                        if(Mathf.Abs((newTime-colorKeyTime)) <= 0.005f) {
+                            newTime = colorKeyTime;
+                            break;
+                        }
+                    }
+                }
                 selectedKeyIndex = mapGeneration.UpdateBorderTime(selectedKeyIndex, newTime);
             }
             needsRepaint = true;
@@ -175,7 +216,7 @@ public class GradientEditor : EditorWindow
                 gradient.RemoveKey(selectedKeyIndex);
                 if(selectedKeyIndex >= gradient.NumKeys()) selectedKeyIndex--;
             } else {
-                mapGeneration.RemoveKey(selectedKeyIndex);
+                mapGeneration.RemoveBorder(selectedKeyIndex);
                 if(selectedKeyIndex >= mapGeneration.NumBorders()) selectedKeyIndex--;
             }
             needsRepaint = true;
