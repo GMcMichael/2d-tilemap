@@ -14,6 +14,9 @@ TextureImporter:
   - first:
       213: 4228818710915541201
     second: SimpleTileMap_3
+  - first:
+      213: -782049110561897038
+    second: SimpleTileMap_4
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -178,6 +181,27 @@ TextureImporter:
       bones: []
       spriteID: 1d865ab5638cfaa30800000000000000
       internalID: 4228818710915541201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SimpleTileMap_4
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 0
+        width: 100
+        height: 100
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b54c083a7a9525f0800000000000000
+      internalID: -782049110561897038
       vertices: []
       indices: 
       edges: []

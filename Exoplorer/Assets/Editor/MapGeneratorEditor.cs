@@ -15,5 +15,8 @@ public class MapGeneratorEditor : Editor
 
         if(GUILayout.Button("Generate"))
             mapGeneration.GenerateMap();
+
+        if(GUILayout.Button("Generate Tilemap"))
+            mapGeneration.GenerateTilemap();
     }
 }
