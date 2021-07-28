@@ -227,28 +227,49 @@ public class ColorGradient
             for (int x = 0; x < noiseMap.GetLength(0); x++) {
                 for (int y = 0; y < noiseMap.GetLength(1); y++) {//may want to check corners
                     if(tempMap[x,y,i] != 1) continue;
-                    if(y-1 >= 0) {//check up
-                        if(tempMap[x,y-1,i] == 0) {
-                            borderMap[x,y] = 1;
-                            continue;
+                    if(i != 0) {
+                        if(y-1 >= 0) {//check up
+                            if(i+1 < tempMap.GetLength(2) && tempMap[x,y-1,i+1] == 1)
+                                continue;
+                        }
+                        if(y+1 < tempMap.GetLength(1)) {//check down
+                            if(i+1 < tempMap.GetLength(2) && tempMap[x,y+1,i+1] == 1)
+                                continue;
+                        }
+                        if(x-1 >= 0) {//check left
+                            if(i+1 < tempMap.GetLength(2) && tempMap[x-1,y,i+1] == 1)
+                                continue;
+                        }
+                        if(x+1 < tempMap.GetLength(0)) {//check right
+                            if(i+1 < tempMap.GetLength(2) && tempMap[x+1,y,i+1] == 1)
+                                continue;
                         }
                     }
-                    if(y+1 < tempMap.GetLength(1)) {//check down
-                        if(tempMap[x,y+1,i] == 0) {
-                            borderMap[x,y] = 1;
-                            continue;
+                    if(i != 1) {
+                        //checking current layer
+                        if(y-1 >= 0) {//check up
+                            if(tempMap[x,y-1,i] == 0) {
+                                borderMap[x,y] = 1;
+                                continue;
+                            }
                         }
-                    }
-                    if(x-1 >= 0) {//check left
-                        if(tempMap[x-1,y,i] == 0) {
-                            borderMap[x,y] = 1;
-                            continue;
+                        if(y+1 < tempMap.GetLength(1)) {//check down
+                            if(tempMap[x,y+1,i] == 0) {
+                                borderMap[x,y] = 1;
+                                continue;
+                            }
                         }
-                    }
-                    if(x+1 < tempMap.GetLength(0)) {//check right
-                        if(tempMap[x+1,y,i] == 0) {
-                            borderMap[x,y] = 1;
-                            continue;
+                        if(x-1 >= 0) {//check left
+                            if(tempMap[x-1,y,i] == 0) {
+                                borderMap[x,y] = 1;
+                                continue;
+                            }
+                        }
+                        if(x+1 < tempMap.GetLength(0)) {//check right
+                            if(tempMap[x+1,y,i] == 0) {
+                                borderMap[x,y] = 1;
+                                continue;
+                            }
                         }
                     }
                 }
